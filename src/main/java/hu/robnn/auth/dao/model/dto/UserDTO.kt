@@ -17,7 +17,7 @@ class UserDTO : UuidHolder {
 
     var realName: String? = null
 
-    var userName: String? = null
+    var username: String? = null
 
     var emailAddress: String? = null
 

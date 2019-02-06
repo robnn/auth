@@ -57,8 +57,8 @@ public class UserService {
 
     @Transactional
     public UserDTO registerUser(UserDTO userDTO) {
-        if (!userDao.findByUserName(userDTO.getUserName()).isEmpty()) {
-            LOGGER.info("Registration failed, used username provided: {}", userDTO.getUserName());
+        if (!userDao.findByUserName(userDTO.getUsername()).isEmpty()) {
+            LOGGER.info("Registration failed, used username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.USED_USERNAME);
         } else if (!userDao.findByEmailAddress(userDTO.getEmailAddress()).isEmpty()) {
             LOGGER.info("Registration failed, used email address provided: {}", userDTO.getEmailAddress());
@@ -68,12 +68,12 @@ public class UserService {
             user.setRealName(userDTO.getRealName());
             user.setEmailAddress(userDTO.getEmailAddress());
             user.setRole(UserRole.USER.name());
-            user.setUserName(userDTO.getUserName());
+            user.setUsername(userDTO.getUsername());
             user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
             LOGGER.info("Calling executeBeforeRegistration method on registered registerInterceptors: {}", registerInterceptors);
             registerInterceptors.forEach(registerInterceptor -> registerInterceptor.executeBeforeRegistration(user));
             User saved = userDao.save(user);
-            LOGGER.info("Registration was successful, new user: {}", saved.getUserName());
+            LOGGER.info("Registration was successful, new user: {}", saved.getUsername());
             LOGGER.info("Calling executeAfterRegistration method on registered registerInterceptors: {}", registerInterceptors);
             registerInterceptors.forEach(registerInterceptor -> registerInterceptor.executeAfterRegistration(saved));
             return userMapper.map(saved);
@@ -81,9 +81,9 @@ public class UserService {
     }
 
     public String login(UserDTO userDTO) {
-        List<User> users = userDao.findByUserName(userDTO.getUserName());
+        List<User> users = userDao.findByUserName(userDTO.getUsername());
         if (users.isEmpty()) {
-            LOGGER.info("Login failed, invalid username provided: {}", userDTO.getUserName());
+            LOGGER.info("Login failed, invalid username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.INVALID_CREDENTIALS);
         }
         User user = users.get(0);
@@ -94,21 +94,21 @@ public class UserService {
             List<UserToken> loggedInUserTokens = tokenDao.findByUserOrderByValidToDesc(users.get(0));
             if (!loggedInUserTokens.isEmpty() && isTokenValid(loggedInUserTokens.get(0))) {
                 renewToken(loggedInUserTokens.get(0));
-                LOGGER.info("Existing and valid token found for user, login was successful. User: {}", userDTO.getUserName());
+                LOGGER.info("Existing and valid token found for user, login was successful. User: {}", userDTO.getUsername());
                 loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(users.get(0)));
                 return loggedInUserTokens.get(0).getToken();
             } else if (!loggedInUserTokens.isEmpty()) {
-                LOGGER.info("Existing but invalid token found for user, deleting it. User: {}", userDTO.getUserName());
+                LOGGER.info("Existing but invalid token found for user, deleting it. User: {}", userDTO.getUsername());
                 tokenDao.delete(loggedInUserTokens.get(0));
             }
             UserToken userToken = createUserToken(user);
             tokenDao.save(userToken);
-            LOGGER.info("Login was successful for user: {}", userDTO.getUserName());
+            LOGGER.info("Login was successful for user: {}", userDTO.getUsername());
             LOGGER.info("Calling executeAfterLogin method on registered loginInterceptors: {}", loginInterceptors);
             loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(users.get(0)));
             return userToken.getToken();
         } else {
-            LOGGER.info("Login failed, invalid password provided for user: {}", userDTO.getUserName());
+            LOGGER.info("Login failed, invalid password provided for user: {}", userDTO.getUsername());
             throw new UserException(UserError.INVALID_CREDENTIALS);
         }
     }
@@ -141,10 +141,10 @@ public class UserService {
             if (user != null) {
                 UserRole userRole = UserRole.valueOf(user.getRole());
                 if (userRole.getPermissionLevel() < requiredRole.getPermissionLevel()) {
-                    LOGGER.info("Authentication failed, permission was insufficient. Needed: {}, presented: {}, User: {}", requiredRole, userRole, user.getUserName());
+                    LOGGER.info("Authentication failed, permission was insufficient. Needed: {}, presented: {}, User: {}", requiredRole, userRole, user.getUsername());
                     throw new UserException(UserError.INSUFFICIENT_PERMISSION);
                 }
-                LOGGER.info("Authentication successful, requesting user: {}", user.getUserName());
+                LOGGER.info("Authentication successful, requesting user: {}", user.getUsername());
                 LOGGER.info("Calling registered authentication interceptors: {}", authenticateInterceptors);
                 authenticateInterceptors.forEach(authenticateInterceptor -> authenticateInterceptor.executeAfterAuthentication(user));
             }

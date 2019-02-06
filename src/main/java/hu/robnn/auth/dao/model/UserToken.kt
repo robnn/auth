@@ -8,7 +8,7 @@ import javax.persistence.*
 
 
 @Entity
-@Table(name = "fm_user_token")
+@Table(name = "au_user_token")
 open class UserToken : UuidHolder{
     override fun setUuid(p0: String?) {
         if(!p0.isNullOrEmpty()) {
@@ -21,8 +21,8 @@ open class UserToken : UuidHolder{
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "fm_user_token_seq")
-    @SequenceGenerator(name = "fm_user_token_seq", sequenceName = "fm_user_token_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "au_user_token_seq")
+    @SequenceGenerator(name = "au_user_token_seq", sequenceName = "au_user_token_seq", allocationSize = 1)
     @Column(name = "id")
     @JsonIgnore
     var id: Long? = null

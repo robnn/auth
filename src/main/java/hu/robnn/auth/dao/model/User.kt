@@ -33,7 +33,7 @@ open class User : UuidHolder{
     var realName: String? = null
 
     @Column(name = "user_name")
-    var userName: String? = null
+    var username: String? = null
 
     @Column(name = "email_address")
     var emailAddress: String? = null

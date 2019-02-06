@@ -19,7 +19,7 @@ public interface LoginInterceptor {
 
     /**
      * Will be called before login
-     * Can only be called, if the user supplied correct userName, to get the entity
+     * Can only be called, if the user supplied correct username, to get the entity
      * @param user the entity from the DB will be passed
      */
     default void executeBeforeLogin(User user){}
