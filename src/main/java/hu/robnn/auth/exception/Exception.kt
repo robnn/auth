@@ -9,6 +9,13 @@ enum class UserError{
     USED_EMAIL_ADDRESS,
     INVALID_CREDENTIALS,
     INSUFFICIENT_PERMISSION,
+    CUSTOM_ERROR,
 }
 
-class UserException(val errorCause: UserError) : RuntimeException()
+class UserException(val errorCause: UserError? = null) : RuntimeException() {
+    var errorCauseString: String? = null
+
+    constructor(errorCauseString: String): this(UserError.CUSTOM_ERROR){
+        this.errorCauseString = errorCauseString
+    }
+}

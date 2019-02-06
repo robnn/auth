@@ -99,4 +99,5 @@ And message can be:
     INVALID_CREDENTIALS - during login
     INSUFFICIENT_PERMISSION - during authentication
 ```
-One can easily use an interceptor for registration data validation, and send an adequate error code with this message format.
+One can easily use an interceptor for example registration data validation, 
+and send an adequate error code with this message format, calling the UserException constructor with string.

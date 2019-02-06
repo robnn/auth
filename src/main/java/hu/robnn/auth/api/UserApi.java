@@ -3,7 +3,6 @@ package hu.robnn.auth.api;
 import hu.robnn.auth.annotation.Authenticated;
 import hu.robnn.auth.dao.model.dto.Token;
 import hu.robnn.auth.dao.model.dto.UserDTO;
-import hu.robnn.auth.enums.UserRole;
 import hu.robnn.auth.exception.UserError;
 import hu.robnn.auth.exception.UserException;
 import hu.robnn.auth.service.UserService;

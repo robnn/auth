@@ -15,7 +15,15 @@ public class RestResponseExceptionHandler extends ResponseEntityExceptionHandler
 
     @ExceptionHandler(value = {UserException.class})
     protected ResponseEntity<Message> handleUserError(RuntimeException ex, WebRequest request){
-        Message messageObject = new Message(Severity.ERROR, ((UserException) ex).getErrorCause().name());
+        UserException casted = (UserException) ex;
+        Message messageObject;
+        if (casted.getErrorCause() == UserError.CUSTOM_ERROR && casted.getErrorCauseString() != null) {
+            messageObject = new Message(Severity.ERROR, casted.getErrorCauseString());
+        } else if (casted.getErrorCause() != null) {
+            messageObject = new Message(Severity.ERROR, casted.getErrorCause().name());
+        } else {
+            messageObject = new Message(Severity.ERROR, "UNKNOWN_ERROR");
+        }
         return new ResponseEntity<>(messageObject, HttpStatus.BAD_REQUEST);
     }
 }
