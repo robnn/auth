@@ -18,12 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -36,6 +38,7 @@ public class UserService {
     private final TokenDao tokenDao;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+
     private final Collection<RegisterInterceptor> registerInterceptors;
     private final Collection<LoginInterceptor> loginInterceptors;
     private final Collection<AuthenticateInterceptor> authenticateInterceptors;
@@ -52,6 +55,7 @@ public class UserService {
         this.authenticateInterceptors = context.getBeansOfType(AuthenticateInterceptor.class).values();
     }
 
+    @Transactional
     public UserDTO registerUser(UserDTO userDTO) {
         if (!userDao.findByUserName(userDTO.getUserName()).isEmpty()) {
             LOGGER.info("Registration failed, used username provided: {}", userDTO.getUserName());
@@ -162,17 +166,16 @@ public class UserService {
         return false;
     }
 
-    //TODO ez adjon vissza Optional-t
-    public UserDTO getUserForToken(String token) {
+    public Optional<UserDTO> getUserForToken(String token) {
         if (token != null) {
             UserToken tokenDMO = tokenDao.findByToken(token);
             if (tokenDMO != null) {
                 User source = tokenDMO.getUser();
                 if (source != null) {
-                    return userMapper.map(source);
+                    return Optional.of(userMapper.map(source));
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 }

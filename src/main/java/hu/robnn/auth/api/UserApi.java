@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @Component
 @RestController("/users")
 @CrossOrigin
@@ -48,9 +50,9 @@ public class UserApi {
     @Authenticated
     @RequestMapping(path = "users/byToken/{token}", method = RequestMethod.GET)
     public ResponseEntity<UserDTO> getUserForToken(@PathVariable() String token){
-        UserDTO userForToken = userService.getUserForToken(token);
-        if(userForToken != null){
-            return new ResponseEntity<>(userForToken, HttpStatus.OK);
+        Optional<UserDTO> userForToken = userService.getUserForToken(token);
+        if(userForToken.isPresent()){
+            return new ResponseEntity<>(userForToken.get(), HttpStatus.OK);
         } else {
             throw new UserException(UserError.INVALID_TOKEN);
         }
