@@ -76,8 +76,8 @@ engine will get them from the context, and call the methods:
 
 ### Messages
 
-During registration, login and authentication, errors can happen. These errors will be given back to the caller of the API 
-in this message format:
+During registration, login and authentication, errors can happen. These errors will be given back to the caller of the API with
+HTTP Response code 400 in this message format:
 ```
     severity: Severity
     message: String
@@ -93,10 +93,10 @@ But mostly, ERROR.
 
 And message can be:
 ```
-    INVALID_TOKEN
-    USED_USERNAME
-    USED_EMAIL_ADDRESS
-    INVALID_CREDENTIALS
-    INSUFFICIENT_PERMISSION
+    INVALID_TOKEN - during authentication
+    USED_USERNAME - during registration
+    USED_EMAIL_ADDRESS - during registration
+    INVALID_CREDENTIALS - during login
+    INSUFFICIENT_PERMISSION - during authentication
 ```
-
+One can easily use an interceptor for registration data validation, and send an adequate error code with this message format.
