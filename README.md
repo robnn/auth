@@ -1,6 +1,6 @@
 # Custom authentication module for Spring framework
 
-The purpose of this module, to handle authentication comfortably, just by annotating an endpoint or service.
+The purpose of this module is to handle authentication comfortably, just by annotating an endpoint or service.
 
 ![annotation](annotation.png)
 
