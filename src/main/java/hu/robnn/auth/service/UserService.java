@@ -57,7 +57,7 @@ public class UserService {
 
     @Transactional
     public UserDTO registerUser(UserDTO userDTO) {
-        if (!userDao.findByUserName(userDTO.getUsername()).isEmpty()) {
+        if (!userDao.findByUsername(userDTO.getUsername()).isEmpty()) {
             LOGGER.info("Registration failed, used username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.USED_USERNAME);
         } else if (!userDao.findByEmailAddress(userDTO.getEmailAddress()).isEmpty()) {
@@ -81,7 +81,7 @@ public class UserService {
     }
 
     public String login(UserDTO userDTO) {
-        List<User> users = userDao.findByUserName(userDTO.getUsername());
+        List<User> users = userDao.findByUsername(userDTO.getUsername());
         if (users.isEmpty()) {
             LOGGER.info("Login failed, invalid username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.INVALID_CREDENTIALS);
