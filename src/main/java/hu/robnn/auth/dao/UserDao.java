@@ -8,7 +8,6 @@ import java.util.List;
 
 @Repository
 public interface UserDao extends CrudRepository<User, Long> {
-    User findByUuid(String uuid);
     List<User> findByUsername(String name);
     List<User> findByEmailAddress(String email);
 }

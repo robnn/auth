@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface TokenDao extends CrudRepository<UserToken, Long> {
-    UserToken findByUuid(String uuid);
     List<UserToken> findByUserOrderByValidToDesc(User user);
     UserToken findByToken(String token);
 }
