@@ -1,4 +1,6 @@
+
 # Custom authentication module for Spring framework
+**Master status:** [<img src="https://travis-ci.org/robnn/auth.svg?branch=master">](https://travis-ci.org/robnn/auth)
 
 The purpose of this module is to handle authentication comfortably, just by annotating an endpoint or service.
 
