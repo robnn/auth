@@ -102,6 +102,25 @@ And message can be:
 One can easily use an interceptor for example registration data validation, 
 and send an adequate error code with this message format, calling the UserException constructor with string.
 
+### Development notes
+
+Add this to your maven settings `~/.m2/settings.xml`:
+
+    <settings>
+     <servers>
+       <server>
+        <id>github</id>
+        <username>user</username>
+        <password>pass</password>
+       </server>
+     </servers>
+    </settings>
+
+To update the maven repository on github, increase the version in the pom and run:
+
+    mvn jar:jar deploy:deploy 
+    mvn site:site
+
 **Copyright 2019 Robin Kurovszky**
 
 Licensed under the Apache License, Version 2.0 (the "License");
