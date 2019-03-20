@@ -5,6 +5,7 @@ import hu.robnn.auth.dao.model.dto.Token;
 import hu.robnn.auth.dao.model.dto.UserDTO;
 import hu.robnn.auth.exception.UserError;
 import hu.robnn.auth.exception.UserException;
+import hu.robnn.auth.facebook.FacebookService;
 import hu.robnn.auth.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,15 +22,17 @@ import java.util.Set;
 public class UserApi {
 
     private final UserService userService;
+    private final FacebookService facebookService;
 
     @Autowired
-    public UserApi(UserService userService) {
+    public UserApi(UserService userService, FacebookService facebookService) {
         this.userService = userService;
+        this.facebookService = facebookService;
     }
 
     @RequestMapping(path = "users", method = RequestMethod.POST)
     public ResponseEntity<UserDTO> register(@RequestBody UserDTO user) {
-        UserDTO created = userService.registerUser(user);
+        UserDTO created = userService.registerUser(user, false);
         if (created != null) {
             return new ResponseEntity<>(created, HttpStatus.CREATED);
         } else {
@@ -63,6 +66,12 @@ public class UserApi {
     public ResponseEntity<UserDTO> addRolesToUser(@RequestParam String username, @RequestBody Set<String> newRoleCodes) {
         UserDTO modified = userService.addRolesToUser(username, newRoleCodes);
         return new ResponseEntity<>(modified, HttpStatus.OK);
+    }
+
+    @RequestMapping(path = "users/login/facebook", method = RequestMethod.POST)
+    public ResponseEntity<Token> loginWithFacebook(@RequestParam String accessToken){
+        Token token = facebookService.loginWithFacebookUser(accessToken);
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
 
 }

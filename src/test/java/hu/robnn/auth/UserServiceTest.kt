@@ -2,6 +2,8 @@ package hu.robnn.auth
 
 import hu.robnn.auth.dao.model.dto.UserDTO
 import hu.robnn.auth.exception.UserException
+import hu.robnn.auth.facebook.FacebookMapper
+import hu.robnn.auth.facebook.FacebookService
 import hu.robnn.auth.mapper.UserMapper
 import hu.robnn.auth.mock.ApplicationContextMock
 import hu.robnn.auth.mock.RoleDaoMock
@@ -38,7 +40,7 @@ class UserServiceTest {
      */
     @Test
     fun testUserCreation() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
 
         assertEquals(1, userDaoMock.count())
     }
@@ -48,8 +50,8 @@ class UserServiceTest {
      */
     @Test(expected = UserException::class)
     fun testUserCreationUsedEmail() {
-        userService.registerUser(buildUserDto().apply { username = "test1" })
-        userService.registerUser(buildUserDto().apply { username = "test2" })
+        userService.registerUser(buildUserDto().apply { username = "test1" }, false)
+        userService.registerUser(buildUserDto().apply { username = "test2" }, false)
     }
 
     /**
@@ -57,8 +59,8 @@ class UserServiceTest {
      */
     @Test(expected = UserException::class)
     fun testUserCreationUsedName() {
-        userService.registerUser(buildUserDto().apply { emailAddress = "test1@test.hu" })
-        userService.registerUser(buildUserDto().apply { emailAddress = "test2@test.hu" })
+        userService.registerUser(buildUserDto().apply { emailAddress = "test1@test.hu" }, false)
+        userService.registerUser(buildUserDto().apply { emailAddress = "test2@test.hu" }, false)
     }
 
     /**
@@ -66,7 +68,7 @@ class UserServiceTest {
      */
     @Test
     fun testLogin() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         val token = userService.login(buildUserDto())
         assert(token.isNotEmpty())
     }
@@ -76,7 +78,7 @@ class UserServiceTest {
      */
     @Test(expected = UserException::class)
     fun testLoginWrongUserName() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         userService.login(buildUserDto().apply { username = "test1" })
     }
 
@@ -85,7 +87,7 @@ class UserServiceTest {
      */
     @Test(expected = UserException::class)
     fun testLoginWrongPassword() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         userService.login(buildUserDto().apply { password = "test1" })
     }
 
@@ -94,7 +96,7 @@ class UserServiceTest {
      */
     @Test
     fun testLoginDouble() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         val token1 = userService.login(buildUserDto())
         val token2 = userService.login(buildUserDto())
         assertEquals(token1, token2)
@@ -105,7 +107,7 @@ class UserServiceTest {
      */
     @Test
     fun testAuthenticate() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         val token = userService.login(buildUserDto())
         userService.authenticate(token, arrayOf("USER"))
     }
@@ -115,7 +117,7 @@ class UserServiceTest {
      */
     @Test(expected = UserException::class)
     fun testAuthenticateWrongRole() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         val token = userService.login(buildUserDto())
         userService.authenticate(token, arrayOf("ADMIN"))
     }
@@ -125,7 +127,7 @@ class UserServiceTest {
      */
     @Test(expected = UserException::class)
     fun testAuthenticateWrongToken() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         userService.login(buildUserDto())
         userService.authenticate("test_token", arrayOf("USER"))
     }
@@ -135,7 +137,7 @@ class UserServiceTest {
      */
     @Test
     fun getUserForTokenTest() {
-        userService.registerUser(buildUserDto())
+        userService.registerUser(buildUserDto(), false)
         val token = userService.login(buildUserDto())
         val userForToken = userService.getUserForToken(token)
         assert(userForToken.isPresent)
@@ -144,7 +146,6 @@ class UserServiceTest {
         assertEquals(buildUserDto().username, userForToken.get().username)
         assertEquals(buildUserDto().realName, userForToken.get().realName)
     }
-
 
     private fun buildUserDto(): UserDTO {
         val target = UserDTO()

@@ -11,6 +11,7 @@ enum class UserError{
     INSUFFICIENT_PERMISSION,
     CUSTOM_ERROR,
     NO_USER_FOR_USERNAME,
+    ERROR_DURING_FACEBOOK_SYNC,
 }
 
 class UserException(val errorCause: UserError? = null) : RuntimeException() {

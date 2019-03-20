@@ -15,6 +15,7 @@ import hu.robnn.auth.service.interceptors.AuthenticateInterceptor;
 import hu.robnn.auth.service.interceptors.LoginInterceptor;
 import hu.robnn.auth.service.interceptors.RegisterInterceptor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -58,7 +59,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO registerUser(UserDTO userDTO) {
+    public UserDTO registerUser(UserDTO userDTO, boolean withoutPassword) {
         if (userDao.findByUsername(userDTO.getUsername()).isPresent()) {
             LOGGER.info("Registration failed, used username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.USED_USERNAME);
@@ -75,7 +76,9 @@ public class UserService {
             }
             user.getRoles().add(userRole.get());
             user.setUsername(userDTO.getUsername());
-            user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
+            if (!withoutPassword) {
+                user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
+            }
             LOGGER.info("Calling executeBeforeRegistration method on registered registerInterceptors: {}", registerInterceptors);
             registerInterceptors.forEach(registerInterceptor -> registerInterceptor.executeBeforeRegistration(user));
             User saved = userDao.save(user);
@@ -86,37 +89,52 @@ public class UserService {
         }
     }
 
+    public String loginWithoutPassword(UserDTO userDTO) {
+        User user = findUserInDb(userDTO);
+        LOGGER.info("Calling executeBeforeLogin method on registered loginInterceptors: {}", loginInterceptors);
+        loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeBeforeLogin(user));
+        return executeCommonLoginFlow(userDTO, user);
+    }
+
     public String login(UserDTO userDTO) {
+        User user = findUserInDb(userDTO);
+        LOGGER.info("Calling executeBeforeLogin method on registered loginInterceptors: {}", loginInterceptors);
+        loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeBeforeLogin(user));
+        if (user.getPasswordHash() != null && passwordEncoder
+                .matches(userDTO.getPassword(), user.getPasswordHash())) {
+            return executeCommonLoginFlow(userDTO, user);
+        } else {
+            LOGGER.info("Login failed, invalid password provided for user: {}", userDTO.getUsername());
+            throw new UserException(UserError.INVALID_CREDENTIALS);
+        }
+    }
+
+    private User findUserInDb(UserDTO userDTO) {
         Optional<User> userOptional = userDao.findByUsername(userDTO.getUsername());
         if (!userOptional.isPresent()) {
             LOGGER.info("Login failed, invalid username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.INVALID_CREDENTIALS);
         }
-        User user = userOptional.get();
-        LOGGER.info("Calling executeBeforeLogin method on registered loginInterceptors: {}", loginInterceptors);
-        loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeBeforeLogin(user));
-        if (user.getPasswordHash() != null && passwordEncoder
-                .matches(userDTO.getPassword(), user.getPasswordHash())) {
-            List<UserToken> loggedInUserTokens = tokenDao.findByUserOrderByValidToDesc(user);
-            if (!loggedInUserTokens.isEmpty() && isTokenValid(loggedInUserTokens.get(0))) {
-                renewToken(loggedInUserTokens.get(0));
-                LOGGER.info("Existing and valid token found for user, login was successful. User: {}", userDTO.getUsername());
-                loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(user));
-                return loggedInUserTokens.get(0).getToken();
-            } else if (!loggedInUserTokens.isEmpty()) {
-                LOGGER.info("Existing but invalid token found for user, deleting it. User: {}", userDTO.getUsername());
-                tokenDao.delete(loggedInUserTokens.get(0));
-            }
-            UserToken userToken = createUserToken(user);
-            tokenDao.save(userToken);
-            LOGGER.info("Login was successful for user: {}", userDTO.getUsername());
-            LOGGER.info("Calling executeAfterLogin method on registered loginInterceptors: {}", loginInterceptors);
+        return userOptional.get();
+    }
+
+    private String executeCommonLoginFlow(UserDTO userDTO, User user) {
+        List<UserToken> loggedInUserTokens = tokenDao.findByUserOrderByValidToDesc(user);
+        if (!loggedInUserTokens.isEmpty() && isTokenValid(loggedInUserTokens.get(0))) {
+            renewToken(loggedInUserTokens.get(0));
+            LOGGER.info("Existing and valid token found for user, login was successful. User: {}", userDTO.getUsername());
             loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(user));
-            return userToken.getToken();
-        } else {
-            LOGGER.info("Login failed, invalid password provided for user: {}", userDTO.getUsername());
-            throw new UserException(UserError.INVALID_CREDENTIALS);
+            return loggedInUserTokens.get(0).getToken();
+        } else if (!loggedInUserTokens.isEmpty()) {
+            LOGGER.info("Existing but invalid token found for user, deleting it. User: {}", userDTO.getUsername());
+            tokenDao.delete(loggedInUserTokens.get(0));
         }
+        UserToken userToken = createUserToken(user);
+        tokenDao.save(userToken);
+        LOGGER.info("Login was successful for user: {}", userDTO.getUsername());
+        LOGGER.info("Calling executeAfterLogin method on registered loginInterceptors: {}", loginInterceptors);
+        loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(user));
+        return userToken.getToken();
     }
 
     private UserToken createUserToken(User user) {

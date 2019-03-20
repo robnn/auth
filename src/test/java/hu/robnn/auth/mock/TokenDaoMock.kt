@@ -12,9 +12,13 @@ class TokenDaoMock: TokenDao {
 
 
     override fun <S : UserToken?> save(entity: S): S {
-        entity?.id = counter.toLong()
-        map[counter.toLong()] = entity
-        counter ++
+        if(map.containsKey(entity?.id)) {
+            map[entity?.id!!] = entity
+        } else {
+            entity?.id = counter.toLong()
+            map[counter.toLong()] = entity
+            counter++
+        }
         return entity
     }
 
