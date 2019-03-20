@@ -30,22 +30,22 @@ open class User : UuidHolder{
     private var uuid: String = UUID.randomUUID().toString()
 
     @Column(name = "real_name")
-    var realName: String? = null
+    open var realName: String? = null
 
     @Column(name = "user_name")
-    var username: String? = null
+    open var username: String? = null
 
     @Column(name = "email_address")
-    var emailAddress: String? = null
+    open var emailAddress: String? = null
 
     @Column(name = "password_hash")
-    var passwordHash: String? = null
+    open var passwordHash: String? = null
 
     @ManyToMany
     @JoinTable(
             name = "au_user_roles",
             joinColumns = [JoinColumn(name = "user_id")],
             inverseJoinColumns = [JoinColumn(name = "role_id")])
-    var roles: Set<Role> = mutableSetOf()
+    open var roles: Set<Role> = mutableSetOf()
 
 }

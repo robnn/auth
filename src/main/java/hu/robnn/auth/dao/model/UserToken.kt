@@ -31,14 +31,14 @@ open class UserToken : UuidHolder{
     private var uuid: String = UUID.randomUUID().toString()
 
     @Column(name = "token")
-    var token: String? = null
+    open var token: String? = null
 
     @Column(name = "valid_to")
-    var validTo: LocalDateTime? = null
+    open var validTo: LocalDateTime? = null
 
     @ManyToOne(targetEntity = User::class)
     @JoinColumn(name = "user_id")
-    var user: User? = null
+    open var user: User? = null
 
 
 

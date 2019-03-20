@@ -50,9 +50,4 @@ class Role : UuidHolder {
 
     @Column(name = "role_code")
     var roleCode: String? = null
-
-    @ManyToMany(mappedBy = "roles")
-    var users: List<User> = mutableListOf()
-
-
 }
