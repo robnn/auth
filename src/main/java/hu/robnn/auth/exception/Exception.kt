@@ -10,6 +10,7 @@ enum class UserError{
     INVALID_CREDENTIALS,
     INSUFFICIENT_PERMISSION,
     CUSTOM_ERROR,
+    NO_USER_FOR_USERNAME,
 }
 
 class UserException(val errorCause: UserError? = null) : RuntimeException() {

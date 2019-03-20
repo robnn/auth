@@ -1,11 +1,13 @@
 package hu.robnn.auth.service;
 
+import hu.robnn.auth.AuthConfiguration;
+import hu.robnn.auth.dao.RoleDao;
 import hu.robnn.auth.dao.TokenDao;
 import hu.robnn.auth.dao.UserDao;
+import hu.robnn.auth.dao.model.Role;
 import hu.robnn.auth.dao.model.User;
 import hu.robnn.auth.dao.model.UserToken;
 import hu.robnn.auth.dao.model.dto.UserDTO;
-import hu.robnn.auth.enums.UserRole;
 import hu.robnn.auth.exception.UserError;
 import hu.robnn.auth.exception.UserException;
 import hu.robnn.auth.mapper.UserMapper;
@@ -22,10 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -38,6 +38,7 @@ public class UserService {
     private final TokenDao tokenDao;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final RoleDao roleDao;
 
     private final Collection<RegisterInterceptor> registerInterceptors;
     private final Collection<LoginInterceptor> loginInterceptors;
@@ -45,11 +46,12 @@ public class UserService {
 
     @Autowired
     public UserService(UserDao userDao, TokenDao tokenDao,
-                       PasswordEncoder passwordEncoder, UserMapper userMapper, ApplicationContext context) {
+                       PasswordEncoder passwordEncoder, UserMapper userMapper, RoleDao roleDao, ApplicationContext context) {
         this.userDao = userDao;
         this.tokenDao = tokenDao;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
+        this.roleDao = roleDao;
         this.registerInterceptors = context.getBeansOfType(RegisterInterceptor.class).values();
         this.loginInterceptors = context.getBeansOfType(LoginInterceptor.class).values();
         this.authenticateInterceptors = context.getBeansOfType(AuthenticateInterceptor.class).values();
@@ -57,17 +59,21 @@ public class UserService {
 
     @Transactional
     public UserDTO registerUser(UserDTO userDTO) {
-        if (!userDao.findByUsername(userDTO.getUsername()).isEmpty()) {
+        if (userDao.findByUsername(userDTO.getUsername()).isPresent()) {
             LOGGER.info("Registration failed, used username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.USED_USERNAME);
-        } else if (!userDao.findByEmailAddress(userDTO.getEmailAddress()).isEmpty()) {
+        } else if (userDao.findByEmailAddress(userDTO.getEmailAddress()).isPresent()) {
             LOGGER.info("Registration failed, used email address provided: {}", userDTO.getEmailAddress());
             throw new UserException(UserError.USED_EMAIL_ADDRESS);
         } else {
             User user = new User();
             user.setRealName(userDTO.getRealName());
             user.setEmailAddress(userDTO.getEmailAddress());
-            user.setRole(UserRole.USER.name());
+            Optional<Role> userRole = roleDao.findByRoleCode(AuthConfiguration.USER_ROLE_CODE);
+            if (!userRole.isPresent()) {
+                throw new IllegalStateException("User role must exist in DB!");
+            }
+            user.getRoles().add(userRole.get());
             user.setUsername(userDTO.getUsername());
             user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
             LOGGER.info("Calling executeBeforeRegistration method on registered registerInterceptors: {}", registerInterceptors);
@@ -81,21 +87,21 @@ public class UserService {
     }
 
     public String login(UserDTO userDTO) {
-        List<User> users = userDao.findByUsername(userDTO.getUsername());
-        if (users.isEmpty()) {
+        Optional<User> userOptional = userDao.findByUsername(userDTO.getUsername());
+        if (!userOptional.isPresent()) {
             LOGGER.info("Login failed, invalid username provided: {}", userDTO.getUsername());
             throw new UserException(UserError.INVALID_CREDENTIALS);
         }
-        User user = users.get(0);
+        User user = userOptional.get();
         LOGGER.info("Calling executeBeforeLogin method on registered loginInterceptors: {}", loginInterceptors);
         loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeBeforeLogin(user));
         if (user.getPasswordHash() != null && passwordEncoder
                 .matches(userDTO.getPassword(), user.getPasswordHash())) {
-            List<UserToken> loggedInUserTokens = tokenDao.findByUserOrderByValidToDesc(users.get(0));
+            List<UserToken> loggedInUserTokens = tokenDao.findByUserOrderByValidToDesc(user);
             if (!loggedInUserTokens.isEmpty() && isTokenValid(loggedInUserTokens.get(0))) {
                 renewToken(loggedInUserTokens.get(0));
                 LOGGER.info("Existing and valid token found for user, login was successful. User: {}", userDTO.getUsername());
-                loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(users.get(0)));
+                loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(user));
                 return loggedInUserTokens.get(0).getToken();
             } else if (!loggedInUserTokens.isEmpty()) {
                 LOGGER.info("Existing but invalid token found for user, deleting it. User: {}", userDTO.getUsername());
@@ -105,7 +111,7 @@ public class UserService {
             tokenDao.save(userToken);
             LOGGER.info("Login was successful for user: {}", userDTO.getUsername());
             LOGGER.info("Calling executeAfterLogin method on registered loginInterceptors: {}", loginInterceptors);
-            loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(users.get(0)));
+            loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(user));
             return userToken.getToken();
         } else {
             LOGGER.info("Login failed, invalid password provided for user: {}", userDTO.getUsername());
@@ -125,7 +131,7 @@ public class UserService {
         return userToken;
     }
 
-    public void authenticate(String token, UserRole requiredRole) {
+    public void authenticate(String token, String[] acceptedRoles) {
         UserToken userToken = tokenDao.findByToken(token);
         if (userToken == null || (userToken.getValidTo() != null && !isTokenValid(userToken))) {
             LOGGER.info("Authentication failed, invalid token provided");
@@ -139,9 +145,9 @@ public class UserService {
             renewToken(userToken);
             User user = userToken.getUser();
             if (user != null) {
-                UserRole userRole = UserRole.valueOf(user.getRole());
-                if (userRole.getPermissionLevel() < requiredRole.getPermissionLevel()) {
-                    LOGGER.info("Authentication failed, permission was insufficient. Needed: {}, presented: {}, User: {}", requiredRole, userRole, user.getUsername());
+                Set<String> userRoles = user.getRoles().stream().map(Role::getRoleCode).collect(Collectors.toSet());
+                if (Collections.disjoint(userRoles, Arrays.asList(acceptedRoles))) {
+                    LOGGER.info("Authentication failed, permission was insufficient. Accepted roles: {}, presented: {}, User: {}", acceptedRoles, userRoles, user.getUsername());
                     throw new UserException(UserError.INSUFFICIENT_PERMISSION);
                 }
                 LOGGER.info("Authentication successful, requesting user: {}", user.getUsername());
@@ -149,6 +155,21 @@ public class UserService {
                 authenticateInterceptors.forEach(authenticateInterceptor -> authenticateInterceptor.executeAfterAuthentication(user));
             }
         }
+    }
+
+    @Transactional
+    public UserDTO addRolesToUser(String userName, Set<String> newRoleCodes) {
+        Optional<User> byUsername = userDao.findByUsername(userName);
+        if (byUsername.isPresent()){
+            User user = byUsername.get();
+            Set<Role> newRoles = newRoleCodes.stream().map(Role.Companion::buildForName).collect(Collectors.toSet());
+            user.getRoles().addAll(newRoles);
+            userDao.save(user);
+            return userMapper.map(user);
+        } else {
+            throw new UserException(UserError.NO_USER_FOR_USERNAME);
+        }
+
     }
 
     private void renewToken(UserToken userToken) {

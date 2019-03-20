@@ -37,7 +37,7 @@ public class AuthenticatedProcessor {
 
         Authenticated authenticated = method.getAnnotation(Authenticated.class);
         LOGGER.info("Authentication requested for method {}", method.getName());
-        userService.authenticate(request.getHeader("X-Auth-Token"), authenticated.neededRole());
+        userService.authenticate(request.getHeader("X-Auth-Token"), authenticated.acceptedRoles());
         return pjp.proceed();
     }
 }

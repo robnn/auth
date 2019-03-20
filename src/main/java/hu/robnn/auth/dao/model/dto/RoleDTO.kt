@@ -3,7 +3,7 @@ package hu.robnn.auth.dao.model.dto
 import hu.robnn.commons.interfaces.UuidHolder
 import java.util.*
 
-class UserDTO : UuidHolder {
+class RoleDTO : UuidHolder {
     override fun setUuid(p0: String?) {
         if(!p0.isNullOrEmpty()) {
             uuid = UUID.fromString(p0!!)
@@ -15,14 +15,5 @@ class UserDTO : UuidHolder {
     }
     private var uuid: UUID = UUID.randomUUID()
 
-    var realName: String? = null
-
-    var username: String? = null
-
-    var emailAddress: String? = null
-
-    var roles: List<RoleDTO> = mutableListOf()
-
-    var password: String? = null
-
+    var roleCode: String? = null
 }

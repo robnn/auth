@@ -1,10 +1,10 @@
 package hu.robnn.auth
 
 import hu.robnn.auth.dao.model.dto.UserDTO
-import hu.robnn.auth.enums.UserRole
 import hu.robnn.auth.exception.UserException
 import hu.robnn.auth.mapper.UserMapper
 import hu.robnn.auth.mock.ApplicationContextMock
+import hu.robnn.auth.mock.RoleDaoMock
 import hu.robnn.auth.mock.TokenDaoMock
 import hu.robnn.auth.mock.UserDaoMock
 import hu.robnn.auth.service.UserService
@@ -21,7 +21,8 @@ class UserServiceTest {
     private val passwordEncoder = BCryptPasswordEncoder()
     private val userMapper = UserMapper()
     private val applicationContextMock = ApplicationContextMock()
-    private val userService = UserService(userDaoMock, tokenDaoMock, passwordEncoder, userMapper, applicationContextMock)
+    private val roleDaoMock = RoleDaoMock()
+    private val userService = UserService(userDaoMock, tokenDaoMock, passwordEncoder, userMapper, roleDaoMock, applicationContextMock)
 
     /**
      * Clears the dao mocks after each tests
@@ -106,7 +107,7 @@ class UserServiceTest {
     fun testAuthenticate() {
         userService.registerUser(buildUserDto())
         val token = userService.login(buildUserDto())
-        userService.authenticate(token, UserRole.USER)
+        userService.authenticate(token, arrayOf("USER"))
     }
 
     /**
@@ -116,7 +117,7 @@ class UserServiceTest {
     fun testAuthenticateWrongRole() {
         userService.registerUser(buildUserDto())
         val token = userService.login(buildUserDto())
-        userService.authenticate(token, UserRole.ADMIN)
+        userService.authenticate(token, arrayOf("ADMIN"))
     }
 
     /**
@@ -126,7 +127,7 @@ class UserServiceTest {
     fun testAuthenticateWrongToken() {
         userService.registerUser(buildUserDto())
         userService.login(buildUserDto())
-        userService.authenticate("test_token", UserRole.USER)
+        userService.authenticate("test_token", arrayOf("USER"))
     }
 
     /**
@@ -139,7 +140,7 @@ class UserServiceTest {
         val userForToken = userService.getUserForToken(token)
         assert(userForToken.isPresent)
         assertEquals(buildUserDto().emailAddress, userForToken.get().emailAddress)
-        assertEquals(buildUserDto().role, userForToken.get().role)
+        assertEquals("USER", userForToken.get().roles[0].roleCode)
         assertEquals(buildUserDto().username, userForToken.get().username)
         assertEquals(buildUserDto().realName, userForToken.get().realName)
     }
@@ -149,7 +150,6 @@ class UserServiceTest {
         val target = UserDTO()
         target.emailAddress = "test@test.hu"
         target.password = "test"
-        target.role = "USER"
         target.username = "test"
         target.realName = "Teszt Elek"
         return target

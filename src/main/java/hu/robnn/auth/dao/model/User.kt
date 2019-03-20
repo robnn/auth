@@ -41,7 +41,11 @@ open class User : UuidHolder{
     @Column(name = "password_hash")
     var passwordHash: String? = null
 
-    @Column(name = "role")
-    var role: String? = null
+    @ManyToMany
+    @JoinTable(
+            name = "au_user_roles",
+            joinColumns = [JoinColumn(name = "user_id")],
+            inverseJoinColumns = [JoinColumn(name = "role_id")])
+    var roles: Set<Role> = mutableSetOf()
 
 }

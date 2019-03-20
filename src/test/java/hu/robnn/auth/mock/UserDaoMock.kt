@@ -16,8 +16,8 @@ class UserDaoMock: UserDao {
         return entity
     }
 
-    override fun findByUsername(name: String?): List<User?> {
-        return map.values.filter { it?.username == name }
+    override fun findByUsername(name: String?): Optional<User> {
+        return Optional.ofNullable(map.values.firstOrNull { it?.username == name })
     }
 
     override fun findAll(): MutableCollection<User?> = map.values
@@ -50,8 +50,8 @@ class UserDaoMock: UserDao {
         return Optional.ofNullable(map[id])
     }
 
-    override fun findByEmailAddress(email: String?): List<User?> {
-        return map.values.filter { it?.emailAddress == email }
+    override fun findByEmailAddress(email: String?): Optional<User> {
+        return Optional.ofNullable(map.values.firstOrNull { it?.emailAddress == email })
     }
 
     override fun delete(entity: User) {

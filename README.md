@@ -15,6 +15,25 @@ The token table stores the currently logged in users auth token, and validity ti
 
 ### Usage
 
+Add the repository:
+
+    <repository>
+        <id>auth-repository</id>
+        <url>https://raw.github.com/robnn/auth/repository</url>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+    </repository>
+
+Add the dependency:
+
+    <dependency>
+        <groupId>hu.robnn</groupId>
+        <artifactId>auth</artifactId>
+        <version>0.0.1</version>
+    </dependency>
+
 The module publishes an API (`{your_base_url}/users`) where users can register, and log in. During login, the user receives
  an authentication token, hereinafter he should use this token as authentication in every request. Using the `@Authenticated`
  annotation the programmer secures an API or service method. Calling an annotated

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RestController("/users")
@@ -55,6 +56,13 @@ public class UserApi {
         } else {
             throw new UserException(UserError.INVALID_TOKEN);
         }
+    }
+
+    @Authenticated(acceptedRoles = { "ADMIN" })
+    @RequestMapping(path = "users/addRolesToUser", method = RequestMethod.POST)
+    public ResponseEntity<UserDTO> addRolesToUser(@RequestParam String username, @RequestBody Set<String> newRoleCodes) {
+        UserDTO modified = userService.addRolesToUser(username, newRoleCodes);
+        return new ResponseEntity<>(modified, HttpStatus.OK);
     }
 
 }
