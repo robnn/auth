@@ -1,5 +1,5 @@
 
-# Custom authentication module for Spring framework
+# Custom authentication module for Spring framework with social login integration
 **Master status:** [<img src="https://travis-ci.org/robnn/auth.svg?branch=master">](https://travis-ci.org/robnn/auth)
 
 The purpose of this module is to handle authentication comfortably, just by annotating an endpoint or service.
@@ -10,8 +10,9 @@ The purpose of this module is to handle authentication comfortably, just by anno
 
 ### Stored data
 
-The module uses 2 tables, `au_user` and `au_user_token`. The user table stores data for users, like name, username, email address, etc. 
+The module uses 3 tables, `au_user`, `au_role`, join table between them and `au_user_token`. The user table stores data for users, like name, username, email address, etc. 
 The token table stores the currently logged in users auth token, and validity time.
+The Role table stores roles, by default 2: `USER` and `ADMIN`, but can extended, by creating new roles using the `RoleDao`
 
 ### Usage
 
@@ -31,7 +32,7 @@ Add the dependency:
     <dependency>
         <groupId>hu.robnn</groupId>
         <artifactId>auth</artifactId>
-        <version>0.0.1</version>
+        <version>0.1.0</version>
     </dependency>
 
 The module publishes an API (`{your_base_url}/users`) where users can register, and log in. During login, the user receives
@@ -53,7 +54,6 @@ The user calls this, to register into the system. Posted data is a complete User
     realName: String
     username: String
     emailAddress: String
-    role: String
     password: String
 ```
 
@@ -80,6 +80,28 @@ The user can call this, to get the stored User data, for a valid token. This req
 so a valid token must be presented in the HTTP header too.
 
 Response is a full user, without password
+
+#### `POST users/login/facebook`:
+
+The user calls this with an oauth2 access token, to login with facebook:
+```
+    token: String
+```
+
+The method gets the user's data from facebook, and registers them if needed, then gives back an auth token in the format of basic login.
+
+#### `POST users/login/google`:
+
+Same as facebook, just with a google access token.
+
+#### `POST users/addRolesToUser?username={}`:
+
+Can be used to add roles to a user, by posting an array of roleCodes:
+```
+    String[]
+```
+
+Only callable by users with ADMIN roles.
 
 ### Password storage
 
@@ -119,6 +141,10 @@ And message can be:
     USED_EMAIL_ADDRESS - during registration
     INVALID_CREDENTIALS - during login
     INSUFFICIENT_PERMISSION - during authentication
+    NO_USER_FOR_USERNAME - can be thrown during role adding
+    ERROR_DURING_FACEBOOK_SYNC - can be thrown during facebook sync
+    ERROR_DURING_GOOGLE_SYNC - can be thrown during google sync
+    
 ```
 One can easily use an interceptor for example registration data validation, 
 and send an adequate error code with this message format, calling the UserException constructor with string.
