@@ -1,4 +1,4 @@
-package hu.robnn.auth.facebook
+package hu.robnn.auth.social.facebook
 
 import hu.robnn.auth.dao.model.dto.UserDTO
 import org.springframework.stereotype.Component

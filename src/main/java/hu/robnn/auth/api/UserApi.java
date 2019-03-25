@@ -5,8 +5,10 @@ import hu.robnn.auth.dao.model.dto.Token;
 import hu.robnn.auth.dao.model.dto.UserDTO;
 import hu.robnn.auth.exception.UserError;
 import hu.robnn.auth.exception.UserException;
-import hu.robnn.auth.facebook.FacebookService;
+import hu.robnn.auth.social.AccessToken;
+import hu.robnn.auth.social.facebook.FacebookService;
 import hu.robnn.auth.service.UserService;
+import hu.robnn.auth.social.google.GoogleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,11 +25,13 @@ public class UserApi {
 
     private final UserService userService;
     private final FacebookService facebookService;
+    private final GoogleService googleService;
 
     @Autowired
-    public UserApi(UserService userService, FacebookService facebookService) {
+    public UserApi(UserService userService, FacebookService facebookService, GoogleService googleService) {
         this.userService = userService;
         this.facebookService = facebookService;
+        this.googleService = googleService;
     }
 
     @RequestMapping(path = "users", method = RequestMethod.POST)
@@ -69,8 +73,14 @@ public class UserApi {
     }
 
     @RequestMapping(path = "users/login/facebook", method = RequestMethod.POST)
-    public ResponseEntity<Token> loginWithFacebook(@RequestParam String accessToken){
+    public ResponseEntity<Token> loginWithFacebook(@RequestBody AccessToken accessToken){
         Token token = facebookService.loginWithFacebookUser(accessToken);
+        return new ResponseEntity<>(token, HttpStatus.OK);
+    }
+
+    @RequestMapping(path = "users/login/google", method = RequestMethod.POST)
+    public ResponseEntity<Token> loginWithGoogle(@RequestBody AccessToken accessToken){
+        Token token = googleService.loginWithGoogleUser(accessToken);
         return new ResponseEntity<>(token, HttpStatus.OK);
     }
 

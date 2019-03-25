@@ -2,8 +2,6 @@ package hu.robnn.auth
 
 import hu.robnn.auth.dao.model.dto.UserDTO
 import hu.robnn.auth.exception.UserException
-import hu.robnn.auth.facebook.FacebookMapper
-import hu.robnn.auth.facebook.FacebookService
 import hu.robnn.auth.mapper.UserMapper
 import hu.robnn.auth.mock.ApplicationContextMock
 import hu.robnn.auth.mock.RoleDaoMock

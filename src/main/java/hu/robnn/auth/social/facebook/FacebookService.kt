@@ -1,4 +1,4 @@
-package hu.robnn.auth.facebook
+package hu.robnn.auth.social.facebook
 
 import com.google.gson.Gson
 import hu.robnn.auth.dao.UserDao
@@ -8,6 +8,7 @@ import hu.robnn.auth.exception.UserError
 import hu.robnn.auth.exception.UserException
 import hu.robnn.auth.mapper.UserMapper
 import hu.robnn.auth.service.UserService
+import hu.robnn.auth.social.AccessToken
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.springframework.stereotype.Component
@@ -23,9 +24,9 @@ open class FacebookService(private val userService: UserService,
     private val baseUrl = "https://graph.facebook.com/me"
 
     @Transactional
-    open fun loginWithFacebookUser(accessToken: String): Token {
+    open fun loginWithFacebookUser(accessToken: AccessToken): Token {
         val request = Request.Builder()
-                .url("$baseUrl?access_token=$accessToken&fields=name%2Cemail%2Cpicture%2Cfirst_name%2Clast_name&method=get" +
+                .url("$baseUrl?access_token=${accessToken.token}&fields=name%2Cemail%2Cpicture%2Cfirst_name%2Clast_name&method=get" +
                         "&pretty=0&sdk=joey&suppress_http_code=1").build()
         try {
             val response = okHttpClient.newCall(request).execute()

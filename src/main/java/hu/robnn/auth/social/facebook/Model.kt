@@ -1,4 +1,4 @@
-package hu.robnn.auth.facebook
+package hu.robnn.auth.social.facebook
 
 class FacebookUser(var name: String? = null,
                    var email: String? = null,
