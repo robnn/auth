@@ -134,6 +134,7 @@ public class UserService {
         LOGGER.info("Login was successful for user: {}", userDTO.getUsername());
         LOGGER.info("Calling executeAfterLogin method on registered loginInterceptors: {}", loginInterceptors);
         loginInterceptors.forEach(loginInterceptor -> loginInterceptor.executeAfterLogin(user));
+        UserContext.Companion.setCurrentUser(user);
         return userToken.getToken();
     }
 
@@ -171,6 +172,7 @@ public class UserService {
                 LOGGER.info("Authentication successful, requesting user: {}", user.getUsername());
                 LOGGER.info("Calling registered authentication interceptors: {}", authenticateInterceptors);
                 authenticateInterceptors.forEach(authenticateInterceptor -> authenticateInterceptor.executeAfterAuthentication(user));
+                UserContext.Companion.setCurrentUser(user);
             }
         }
     }
