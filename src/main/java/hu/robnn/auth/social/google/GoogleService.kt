@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 open class GoogleService(private val userService: UserService,
                          private val userDao: UserDao,
                          private val userMapper: UserMapper,
-                         private val facebookMapper: GoogleMapper) {
+                         private val googleMapper: GoogleMapper) {
 
     private val okHttpClient = OkHttpClient()
     private val baseUrl = "https://www.googleapis.com/oauth2/v1/userinfo"
@@ -49,7 +49,7 @@ open class GoogleService(private val userService: UserService,
     }
 
     private fun registerGoogleUser(googleUser: GoogleUser): UserDTO {
-        val userDTO = facebookMapper.mapToUserDTO(googleUser)
+        val userDTO = googleMapper.mapToUserDTO(googleUser)
         return userService.registerUser(userDTO, true)
     }
 }

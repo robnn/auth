@@ -15,7 +15,6 @@ import hu.robnn.auth.service.interceptors.AuthenticateInterceptor;
 import hu.robnn.auth.service.interceptors.LoginInterceptor;
 import hu.robnn.auth.service.interceptors.RegisterInterceptor;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;

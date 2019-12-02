@@ -23,7 +23,6 @@ public class AuthenticatedProcessor {
     private final HttpServletRequest request;
     private final UserService userService;
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     public AuthenticatedProcessor(HttpServletRequest request, UserService userService) {
         this.request = request;
